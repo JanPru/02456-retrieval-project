@@ -21,7 +21,7 @@ class TransformerEncoder(nn.Module):
                                    num_hidden_layers = self.n_layers,   # Numero de capes de transformers
                                    num_attention_heads = self.n_heads,  # Numero de attention heads per cada capa de transformer
                                    x = self.hidden_dim,                 # Mida de les q, k i v de cada head
-                                   intermediate_size = self.feed_forward_dim)           # Dimensio de la capa FFN
+                                   intermediate_size = self.feed_forward_dim)   # Dimensio de la capa FFN
         self.model = BertModel(configuration)
         if self.model is None:
             raise ValueError("Model not correctly initializated")
@@ -50,4 +50,7 @@ class TransformerEncoder(nn.Module):
         """
         Run a forward pass on the model
         """
+        out = self.model(x)
+        vec_frase = self.pool(x)
+        return vec_frase
         raise NotImplementedError()
