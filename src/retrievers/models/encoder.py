@@ -20,7 +20,6 @@ class TransformerEncoder(nn.Module):
         configuration = BertConfig(hidden_size = self.emb_dim,          # Tamany dels vectors a cada capa
                                    num_hidden_layers = self.n_layers,   # Numero de capes de transformers
                                    num_attention_heads = self.n_heads,  # Numero de attention heads per cada capa de transformer
-                                   x = self.hidden_dim,                 # Mida de les q, k i v de cada head
                                    intermediate_size = self.feed_forward_dim)   # Dimensio de la capa FFN
         self.model = BertModel(configuration)
         if self.model is None:
@@ -37,12 +36,12 @@ class TransformerEncoder(nn.Module):
             raise NotImplementedError()
         
         elif self.cfg.model.pooling_type == 'max':
-            vec_frase = x.max(dim=1)            # Agafa el maxim en la dimensio 1. Dimensio 1 es la sequence_length, que es la que volem "eliminar"
+            vec_frase = x.max(dim=1).values            # Agafa el maxim en la dimensio 1. Dimensio 1 es la sequence_length, que es la que volem "eliminar"
             return vec_frase
             raise NotImplementedError()
         
         elif self.cfg.model.pooling_type == 'mean':
-            vec_frase = x.mean(dim=1)           # Agafa la mean en la dimensio 1
+            vec_frase = x.mean(dim=1)           # Agafa la mean en la dimensio 1. S'ha de fer la masked attention???
             return vec_frase
             raise NotImplementedError()
 
@@ -50,7 +49,8 @@ class TransformerEncoder(nn.Module):
         """
         Run a forward pass on the model
         """
-        out = self.model(x)
-        vec_frase = self.pool(x)
+        out = self.model(x)             # (torch.Tensor of shape (batch_size, sequence_length, hidden_size)) — Sequence of hidden-states at the output of the last layer of the model. (de la documentacio de Hugging face)
+        H = out.last_hidden_state
+        vec_frase = self.pool(H)
         return vec_frase
         raise NotImplementedError()
