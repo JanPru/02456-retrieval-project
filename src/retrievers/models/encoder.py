@@ -5,10 +5,12 @@ from math import sqrt
 from transformers import BertConfig, BertModel
 
 class TransformerEncoder(nn.Module):
-    def __init__(self, n_layers: int, n_heads: int, emb_dim: int, hidden_dim: int, feed_forward_dim: int):
+    def __init__(self, n_layers: int, n_heads: int, emb_dim: int, hidden_dim: int, feed_forward_dim: int, pooling_type: str = 'cls'):
+        super().__init__()
+        self.pooling_type = pooling_type
         self.n_layers = n_layers
         self.n_heads = n_heads
-        self.emb_dim =    emb_dim
+        self.emb_dim = emb_dim
         self.hidden_dim = hidden_dim
         self.feed_forward_dim = feed_forward_dim
         self.setup_model()
@@ -30,17 +32,17 @@ class TransformerEncoder(nn.Module):
         Given a batch_size x sequence_length x emb_dim tensor, pool the input along the sequence_length dimension 
         Returns: A pooled vector of shape batch_size x emb_dim
         """
-        if self.cfg.model.pooling_type == 'cls':
+        if self.pooling_type == 'cls':
             vec_frase = x[:,0,:]                # Agafa nomes el primer 
             return vec_frase
             raise NotImplementedError()
         
-        elif self.cfg.model.pooling_type == 'max':
+        elif self.pooling_type == 'max':
             vec_frase = x.max(dim=1).values            # Agafa el maxim en la dimensio 1. Dimensio 1 es la sequence_length, que es la que volem "eliminar"
             return vec_frase
             raise NotImplementedError()
         
-        elif self.cfg.model.pooling_type == 'mean':
+        elif self.pooling_type == 'mean':
             vec_frase = x.mean(dim=1)           # Agafa la mean en la dimensio 1. S'ha de fer la masked attention???
             return vec_frase
             raise NotImplementedError()
@@ -49,7 +51,7 @@ class TransformerEncoder(nn.Module):
         """
         Run a forward pass on the model
         """
-        out = self.model(x)             # (torch.Tensor of shape (batch_size, sequence_length, hidden_size)) — Sequence of hidden-states at the output of the last layer of the model. (de la documentacio de Hugging face)
+        out = self.model(**x)            # (torch.Tensor of shape (batch_size, sequence_length, hidden_size)) — Sequence of hidden-states at the output of the last layer of the model. (de la documentacio de Hugging face)
         H = out.last_hidden_state
         vec_frase = self.pool(H)
         return vec_frase

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 class DPRLoss(nn.Module):
     def __init__(self):
@@ -15,4 +15,6 @@ class DPRLoss(nn.Module):
 
         Returns: A 1d torch tensor 
         """
-        raise NotImplementedError()
+        score = queries @ documents.T
+        labels = torch.arange(queries.shape[0], device=score.device)
+        return F.cross_entropy(score, labels)
