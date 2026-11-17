@@ -51,8 +51,7 @@ class Trainer:
                 self.optimizer.step()
                 self.losses.append(loss.item())
 
-                if step % 10 == 0:
-                    print(f'epoch {epoch + 1}/{self.epochs} | step {step}/{len(loader)} | loss {loss.item():.4f}')
+            print(f'epoch {epoch + 1}/{self.epochs} | loss {loss.item():.4f}')
 
             if val_dataset is not None:
                 val_loader = DataLoader(val_dataset, self.batch_size, shuffle = True, generator = torch.Generator().manual_seed(0))
