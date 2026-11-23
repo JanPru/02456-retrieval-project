@@ -124,34 +124,38 @@ class TransformerEncoder(nn.Module):
             TransformerLayer(self.n_heads, self.emb_dim, self.feed_forward_dim) for _ in range(self.n_layers)
         ])
 
-    def pool(self, x):
+    def pool(self, x, mask = None):
         """
         Given a batch_size x sequence_length x emb_dim tensor, pool the input along the sequence_length dimension 
         Returns: A pooled vector of shape batch_size x emb_dim
         """
+
+        not_padding = mask.squeeze(1).unsqueeze(-1).float()
+
         if self.pooling_type == 'cls':
             vec_frase = x[:,0,:]                # Agafa nomes el primer 
             return vec_frase
-            raise NotImplementedError()
         
         elif self.pooling_type == 'max':
+            x = x.masked_fill(not_padding == 0, float('-inf'))
             vec_frase = x.max(dim=1).values            # Agafa el maxim en la dimensio 1. Dimensio 1 es la sequence_length, que es la que volem "eliminar"
             return vec_frase
-            raise NotImplementedError()
         
         elif self.pooling_type == 'mean':
-            vec_frase = x.mean(dim=1)           # Agafa la mean en la dimensio 1. S'ha de fer la masked attention???
+            suma = (x * not_padding).sum(dim=1)
+            reals = not_padding.sum(1).clamp(min=1)
+            vec_frase = suma/reals      # Agafa la mean en la dimensio 1. S'ha de fer la masked attention???
             return vec_frase
-            raise NotImplementedError()
 
-    def forward(self, x: torch.tensor) -> torch.tensor:
+    def forward(self, x: torch.tensor, attention_mask) -> torch.tensor:
         """
         Run a forward pass on the model
         """
+        mask = attention_mask.unsqueeze(1)
         # Ens entra documents o querys
         x = self.pos_enc(self.embed(x))
         for layer in self.layers:
-            x = layer(x)
-        return self.pool(x)
+            x = layer(x, mask)
+        return F.normalize(self.pool(x,mask), dim=-1)
 
     
