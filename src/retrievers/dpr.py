@@ -28,12 +28,12 @@ class DPR:
                                            pooling_type=self.cfg.model.pooling_type).to(self.device)
         
         query_weights_path = self.cfg.model.get('query_encoder_weights_path', None)
-        if self.cfg.model.get('query_encoder_weights_path', None):
-            self.query_encoder.load_state_dict(query_weights_path)
+        if query_weights_path:
+            self.query_encoder.load_state_dict(torch.load(query_weights_path, map_location=self.device))
 
         document_weights_path = self.cfg.model.get('document_encoder_weights_path', None)
-        if self.cfg.model.get('query_encoder_weights_path', None):
-            self.document_encoder.load_state_dict(document_weights_path)
+        if document_weights_path:
+            self.document_encoder.load_state_dict(torch.load(document_weights_path, map_location=self.device))
     
     def Lookup(self, queries: list[str], k: int) -> list:
         """
@@ -46,7 +46,7 @@ class DPR:
 
     def CalculateScores(self, queries: list[str]):
         """Calculate scores for a query
-        
+
         Args:
             query (str): The query to calculate scores for
         
@@ -72,7 +72,8 @@ class DPR:
                 batch = texts[i : i + batch_size]
                 tok = self.tokenizer(batch, padding=True, truncation=True, return_tensors="pt")
                 ids = tok["input_ids"].to(self.device)
-                vecs = self.document_encoder(ids)
+                mask = tok["attention_mask"].to(self.device)
+                vecs = self.document_encoder(ids, mask)
                 encoded_d.append(vecs)
 
         self.document_vectors = torch.cat(encoded_d, dim=0)
@@ -83,5 +84,6 @@ class DPR:
         with torch.no_grad():
             tok = self.tokenizer(queries, padding=True, truncation=True, return_tensors="pt")
             ids = tok["input_ids"].to(self.device)
-            query_vectors = self.query_encoder(ids)
+            mask = tok["attention_mask"].to(self.device)
+            query_vectors = self.query_encoder(ids, mask)
         return query_vectors
