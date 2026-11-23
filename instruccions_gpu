@@ -1,0 +1,79 @@
+Here is a guide to running things on the DTU HPC:
+
+Some useful commands:
+
+module avail “module_name” shows you the available versions for a module. This could for instance be cuda and python.
+
+ 
+
+module swap “module_name/version” lets you switch from one module to another. This will come in handy when setting up venv.
+
+Once you connect to the HPC via ssh, you will be on the login node and see something in the terminal like: gbarlogin1(“student_number”).
+
+ 
+
+DO NOT run any code on the login node! This will slow done everyone else’s jobs on the HPC. To run some code, you will need to either:
+
+Submit a job script. This is a shell script where you specify the memory requirements, GPU type, duration, and what python files to run.
+Run on an interactive node. This is only intended for debugging your code, not for model training or long jobs. There are fewer resources available on interactive nodes and if you decide to train on an interactive node, you will hinder someone else from debugging their code.
+ 
+
+Running interactive nodes
+
+You have three options for interactive nodes:
+
+a100
+sxm2
+volta
+ 
+
+Writing “voltash” in the terminal will allow you to go from the login node to a volta node. When you are on a volta node, run:
+
+nvidia-smi
+
+This will show you what code others are running on the machine and their VRAM consumption. To swtich to a GPU run:
+
+“export CUDA_VISIBLE_DEVICES=0”
+
+Which will switch to GPU 0. You can see the GPU’s available and their number on the left side of the output of nvidia-smi.
+
+ 
+
+Running job scripts
+When running job scripts, you write a bash script (see attached as an example).
+
+To submit a job, write the following in the terminal:
+
+bsub < “name_of_jobscript.sh”
+
+Write “bstat” to see the status of your current job e.g., if it is pending or actively running. You can set the name of stderr and stdout in the job script and view various prints happening during execution of your job inside there.
+
+ 
+
+Sometimes there can be a lot of traffic on certain GPU’s. If you are not strict about hardware, then it can be nice to switch to from a highly requested GPU to a less requested one. To see the number of pending jobs to various queues write “bqueues” in the terminal.
+
+ 
+
+If you see that e.g., there is a lot of pending jobs on the a100 but not the v100 you could then specify gpuv100 in your job script.
+
+ 
+
+Note: A job script can maximum run for 24 hours, so if you are planning any training longer than that be sure to checkpoint your model weights and optimizer state.
+
+ 
+
+Accessing the HPC outside of DTU
+
+In order to access HPC outside DTU you need a vpn:
+
+ 
+
+Go to the following website:
+https://www.hpc.dtu.dk/?page_id=5685
+
+ 
+
+And download the Cisco AnyConnect client suitable for your OS. Once downloaded, you need to connect to vpn.dtu.dk which will prompt you to write your username (DTU student number) and password (same as for DTU inside). 
+
+
+I have attached an example job script which can help you structure yours.
