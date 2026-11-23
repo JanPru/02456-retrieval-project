@@ -10,8 +10,6 @@ class DPR:
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.__load_models()
-        self.query_encoder.to(self.device)
-        self.document_encoder.to(self.device)
     
     def __load_models(self):
         # n_heads, n_layers, emb_in, hidden_dim, feed_forward_dim
@@ -20,14 +18,14 @@ class DPR:
                                            emb_dim=self.cfg.model.emb_dim,
                                            hidden_dim=self.cfg.model.hidden_dim,
                                            feed_forward_dim=self.cfg.model.feed_forward_dim,
-                                           pooling_type=self.cfg.model.pooling_type)
+                                           pooling_type=self.cfg.model.pooling_type).to(self.device)
         
         self.document_encoder = TransformerEncoder(n_layers = self.cfg.model.n_layers,
                                            n_heads=self.cfg.model.n_heads,
                                            emb_dim=self.cfg.model.emb_dim,
                                            hidden_dim=self.cfg.model.hidden_dim,
                                            feed_forward_dim=self.cfg.model.feed_forward_dim,
-                                           pooling_type=self.cfg.model.pooling_type)
+                                           pooling_type=self.cfg.model.pooling_type).to(self.device)
         
         query_weights_path = self.cfg.model.get('query_encoder_weights_path', None)
         if self.cfg.model.get('query_encoder_weights_path', None):
