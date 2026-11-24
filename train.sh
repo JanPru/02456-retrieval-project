@@ -11,7 +11,7 @@
 
 module load python3/3.11.9
 module load cuda/12.1
-source ~/venvs/dpr/bin/activate
+source /dtu/blackhole/1e/233438/venvs/dpr/bin/activate
 
-cd ~/02456-retrieval-project
-python train.py
+cd /dtu/blackhole/1e/233438/02456-retrieval-project
+python -u train.py
