@@ -3,8 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class DPRLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, temperature=1):
         super().__init__()
+        self.temperature = temperature
     
     def forward(self, queries: torch.tensor, documents: torch.tensor):
         """
@@ -15,6 +16,6 @@ class DPRLoss(nn.Module):
 
         Returns: A 1d torch tensor 
         """
-        score = queries @ documents.T
+        score = (queries @ documents.T)/self.temperature
         labels = torch.arange(queries.shape[0], device=score.device)
         return F.cross_entropy(score, labels)
