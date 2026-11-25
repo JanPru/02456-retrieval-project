@@ -13,12 +13,12 @@ def build_pairs(dataset):
     return pairs
 
 class Trainer:
-    def __init__(self, query_encoder: nn.Module, document_encoder: nn.Module, tokenizer, device, lr, batch_size, epochs, temperature):
-        parameters = list(query_encoder.parameters()) + list(document_encoder.parameters())
-        self.device = device
-        self.query_encoder = query_encoder.to(device)
-        self.document_encoder = document_encoder.to(device)
-        self.tokenizer = tokenizer
+    def __init__(self, dpr, lr, batch_size, epochs, temperature):
+        self.dpr = dpr
+        self.query_encoder = dpr.query_encoder
+        self.document_encoder = dpr.document_encoder
+        self.device = dpr.device
+        parameters = list(self.query_encoder.parameters()) + list(self.document_encoder.parameters())
         self.batch_size = batch_size
         self.epochs = epochs
         self.losses = []    
@@ -26,11 +26,6 @@ class Trainer:
 
         self.criterion = DPRLoss(temperature)
         self.optimizer = torch.optim.AdamW(parameters, lr=lr)
-
-
-    def encode(self, encoder, text):
-        tokens = self.tokenizer(text, padding=True, truncation=True, max_length=256, return_tensors='pt').to(self.device)
-        return encoder(tokens['input_ids'], tokens['attention_mask'])
 
     def train(self, dataset, val_dataset):
         loader = DataLoader(dataset, self.batch_size, shuffle = True)
@@ -48,8 +43,8 @@ class Trainer:
                 passages = list(batch[1])
 
                 self.optimizer.zero_grad()
-                q_vec = self.encode(self.query_encoder, queries)
-                d_vec = self.encode(self.document_encoder, passages)
+                q_vec = self.dpr.encode(self.query_encoder, queries)
+                d_vec = self.dpr.encode(self.document_encoder, passages)
                 loss = self.criterion(q_vec, d_vec)
                 loss.backward()
                 self.optimizer.step()
@@ -67,8 +62,8 @@ class Trainer:
                 for batch in val_loader:
                     queries = list(batch[0])
                     passages = list(batch[1])
-                    q_vec = self.encode(self.query_encoder, queries)
-                    d_vec = self.encode(self.document_encoder, passages)
+                    q_vec = self.dpr.encode(self.query_encoder, queries)
+                    d_vec = self.dpr.encode(self.document_encoder, passages)
                     total += self.criterion(q_vec, d_vec).item()
 
             self.query_encoder.train()
