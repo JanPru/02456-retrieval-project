@@ -44,28 +44,6 @@ def main(cfg):
                     'epochs': trainer.epochs,
                     'best_epoch': trainer.best_epoch}, f)
 
-        # ---------- Temporary plot of the losses (to delete later) ----------
-        import matplotlib
-        matplotlib.use('Agg')   # no screen on the HPC: only save the image
-        import matplotlib.pyplot as plt
-
-        steps_per_epoch = len(trainer.losses) // trainer.epochs
-        train_per_epoch = [sum(trainer.losses[i*steps_per_epoch:(i+1)*steps_per_epoch]) / steps_per_epoch
-                           for i in range(trainer.epochs)]
-        epochs = range(1, trainer.epochs + 1)
-
-        plt.figure()
-        plt.plot(epochs, train_per_epoch, label='train')
-        plt.plot(epochs, trainer.val_losses, label='validation')
-        plt.axvline(trainer.best_epoch, linestyle='--', color='gray', label='best epoch')
-        plt.title(f'Losses ({pooling} pooling)')
-        plt.xlabel('epoch')
-        plt.ylabel('loss')
-        plt.legend()
-        plt.savefig(f'{output_direction}/losses_{pooling}.png')
-        plt.close()
-        # ---------------------------------------------------------------------
-
 
 if __name__ == '__main__':
     main()
