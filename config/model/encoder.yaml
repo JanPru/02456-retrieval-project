@@ -4,3 +4,7 @@ hidden_dim: 32
 n_heads: 4
 n_layers: 6
 feed_forward_dim: 768
+
+# Trained weights if descommented then the DPR encoders use those weights. Just for evaluation.
+# query_encoder_weights_path: 'outputs/dpr_weights/cls/query_encoder.pt'
+# document_encoder_weights_path: 'outputs/dpr_weights/cls/document_encoder.pt'
