@@ -73,11 +73,18 @@ class DPR:
         with torch.no_grad():
             return self.encode(self.query_encoder, queries)
 
-    # Cambiar manera de ferho
     def EncodeDocuments(self, batch_size: int = 64):
-        texts = [d.text for d in self.index.GetDocuments()]
+        documents = self.index.GetDocuments()
+        texts = [document.text for document in documents]
+
         self.document_encoder.eval()
+        encoded_batches = []
         with torch.no_grad():
-            self.document_vectors = torch.cat([self.encode(self.document_encoder, texts[i:i + batch_size])
-                                            for i in range(0, len(texts), batch_size)])
+            for start in range(0, len(texts), batch_size):
+                batch_texts = texts[start : start + batch_size]
+
+                batch_vectors = self.encode(self.document_encoder, batch_texts)
+                encoded_batches.append(batch_vectors)
+
+        self.document_vectors = torch.cat(encoded_batches, dim=0)
         return self.document_vectors
