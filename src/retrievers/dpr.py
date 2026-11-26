@@ -7,7 +7,7 @@ class DPR:
     def __init__(self, cfg, documents):
         self.cfg = cfg
         self.index = DocumentDataset(documents)
-        self.document_encoder = None
+        self.document_vectors = None
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.__load_models()
