@@ -1,6 +1,7 @@
+#Here we initializate the train as in train.py, but for 3 different
+#temperatures for the pooling 'main', which has lowest val error
 import json
 import os
-
 import hydra
 import torch
 
@@ -8,14 +9,12 @@ from src.data_utils.corpus import Corpus
 from src.retrievers.dpr import DPR
 from src.training.trainer import build_pairs, Trainer
 
-
 @hydra.main(config_path='config', config_name='fiqa_experiment.yaml', version_base=None)
 def main(cfg):
     #Load the data
     corpus = Corpus(dataset_name=cfg.dataset.name, base_dir=f'{cfg.base_path}/retrieval_data')
     train_pairs = build_pairs(corpus.train)
     val_pairs = build_pairs(corpus.val)
-
     if not torch.cuda.is_available():
         raise RuntimeError('No GPU available. Stopped. ')
 
@@ -44,7 +43,5 @@ def main(cfg):
                     'best_epoch': trainer.best_epoch,
                     'temperature': temperature,
                     'pooling': pooling}, f)
-
-
 if __name__ == '__main__':
     main()

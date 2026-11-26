@@ -4,6 +4,8 @@ import torch.nn as nn
 from src.training.loss import DPRLoss
 from torch.utils.data import DataLoader
 
+#Some queries correspond to more than one pasage. 
+#This function is created to separate them into more frequent but only pairs of data
 def build_pairs(dataset):
     queries, list_pasages = list(dataset['question']), list(dataset['text'])
     pairs = []
@@ -12,6 +14,7 @@ def build_pairs(dataset):
             pairs.append((queries, pasage))
     return pairs
 
+#We build the trainer
 class Trainer:
     def __init__(self, dpr, lr, batch_size, epochs, temperature):
         self.dpr = dpr
@@ -29,10 +32,8 @@ class Trainer:
 
     def train(self, dataset, val_dataset):
         loader = DataLoader(dataset, self.batch_size, shuffle = True)
-
         self.query_encoder.train()
         self.document_encoder.train()
-
         best_val_loss = float('inf')
         self.best_epoch = None
 
@@ -52,7 +53,7 @@ class Trainer:
                 epoch_losses.append(loss.item())
 
             train_loss = sum(epoch_losses) / len(epoch_losses) # mean loss of the epoch
-            print(f'epoch {epoch + 1}/{self.epochs} | train loss {train_loss:.4f}', flush = True)
+            print(f'Epoch {epoch + 1}/{self.epochs} | Train loss {train_loss:.4f}', flush = True)
 
             val_loader = DataLoader(val_dataset, self.batch_size, shuffle = True, generator = torch.Generator().manual_seed(0))
             self.query_encoder.eval()
@@ -68,16 +69,16 @@ class Trainer:
 
             self.query_encoder.train()
             self.document_encoder.train()
-            val_loss = total / len(val_loader) 
+            val_loss= total/ len(val_loader) 
             self.val_losses.append(val_loss)
-            print(f'epoch {epoch + 1}/{self.epochs} | val loss {val_loss:.4f}', flush = True)
+            print(f'Epoch {epoch + 1}/{self.epochs} | Val loss {val_loss:.4f}', flush = True)
 
-            # Weights with the lowest validation loss
+            # We keep the Weights with the lowest validation loss
             if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                self.best_epoch = epoch + 1
-                self.best_query_weights = copy.deepcopy(self.query_encoder.state_dict())
-                self.best_document_weights = copy.deepcopy(self.document_encoder.state_dict())
+                best_val_loss =val_loss
+                self.best_epoch= epoch + 1
+                self.best_query_weights= copy.deepcopy(self.query_encoder.state_dict())
+                self.best_document_weights= copy.deepcopy(self.document_encoder.state_dict())
 
         # We load the best weights (lower validation loss) to the final trainer
         self.query_encoder.load_state_dict(self.best_query_weights)

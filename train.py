@@ -1,6 +1,5 @@
 import json
 import os
-
 import hydra
 import torch
 
@@ -22,7 +21,6 @@ def main(cfg):
     else: 
         raise RuntimeError('No GPU available. Stopped. ')
 
-
     #Save losses for the different  poolings
     pools = ['cls', 'mean', 'max']
     for pooling in pools:
@@ -43,7 +41,5 @@ def main(cfg):
                     'val_losses': [float(x) for x in trainer.val_losses],
                     'epochs': trainer.epochs,
                     'best_epoch': trainer.best_epoch}, f)
-
-
 if __name__ == '__main__':
     main()
