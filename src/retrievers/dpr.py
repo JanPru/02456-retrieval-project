@@ -7,10 +7,11 @@ class DPR:
     def __init__(self, cfg, documents):
         self.cfg = cfg
         self.index = DocumentDataset(documents)
+        self.document_encoder = None
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.__load_models()
-    
+
     def __load_models(self):
         # n_heads, n_layers, emb_in, hidden_dim, feed_forward_dim
         self.query_encoder = TransformerEncoder(n_layers = self.cfg.model.n_layers,
@@ -53,37 +54,30 @@ class DPR:
         Returns:
             np.array: An array of scores for each document
 
-            num_queries x num_documents where (i, j) = ∑_i TF-IDF(q_i, D_j; D) 
-        
+            num_queries x num_documents where (i, j) = ∑_i TF-IDF(q_i, D_j; D)
+
         """
         # Convert the queries to a vector
+        if self.document_vectors is None:
+            self.EncodeDocuments()
         query_vectors = self.EncodeQueries(queries)
         scores = query_vectors @ self.document_vectors.T
         return scores
 
-    def EncodeDocuments(self, batch_size: int = 64):
-        documents = self.index.GetDocuments()
-        texts = [d.text for d in documents]
-        self.document_encoder.eval()
-
-        encoded_d = []
-        with torch.no_grad():  
-            for i in range(0, len(texts), batch_size):
-                batch = texts[i : i + batch_size]
-                tok = self.tokenizer(batch, padding=True, truncation=True, return_tensors="pt")
-                ids = tok["input_ids"].to(self.device)
-                mask = tok["attention_mask"].to(self.device)
-                vecs = self.document_encoder(ids, mask)
-                encoded_d.append(vecs)
-
-        self.document_vectors = torch.cat(encoded_d, dim=0)
-        return self.document_vectors
+    def encode(self, encoder, texts: list[str], max_length: int = 256):
+        tok = self.tokenizer(texts, padding=True, truncation=True, max_length=max_length, return_tensors="pt").to(self.device)
+        return encoder(tok["input_ids"], tok["attention_mask"])
 
     def EncodeQueries(self, queries: list[str]):
         self.query_encoder.eval()
         with torch.no_grad():
-            tok = self.tokenizer(queries, padding=True, truncation=True, return_tensors="pt")
-            ids = tok["input_ids"].to(self.device)
-            mask = tok["attention_mask"].to(self.device)
-            query_vectors = self.query_encoder(ids, mask)
-        return query_vectors
+            return self.encode(self.query_encoder, queries)
+
+    # Cambiar manera de ferho
+    def EncodeDocuments(self, batch_size: int = 64):
+        texts = [d.text for d in self.index.GetDocuments()]
+        self.document_encoder.eval()
+        with torch.no_grad():
+            self.document_vectors = torch.cat([self.encode(self.document_encoder, texts[i:i + batch_size])
+                                            for i in range(0, len(texts), batch_size)])
+        return self.document_vectors
